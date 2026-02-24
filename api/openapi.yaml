@@ -1,0 +1,769 @@
+openapi: 3.0.0
+info:
+  title: Ghostwriter API
+  description: AI-powered message suggestion API for helping users craft better replies
+  version: 1.0.0
+  contact:
+    name: Ghostwriter Support
+    email: support@ghostwriter.app
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.ghostwriter.app
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Messages
+    description: Message generation and management
+  - name: Analytics
+    description: Usage statistics and analytics
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    User:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: Unique user identifier
+          example: "user_123abc"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "user@example.com"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2026-02-24T10:30:00Z"
+        tokensUsedThisMonth:
+          type: integer
+          description: Total tokens used this month
+          example: 45000
+        messagesGeneratedThisMonth:
+          type: integer
+          description: Total messages generated this month
+          example: 150
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique message identifier
+          example: "msg_456def"
+        uid:
+          type: string
+          description: User ID who created the message
+          example: "user_123abc"
+        originalMessage:
+          type: string
+          description: The original message user wants to reply to
+          example: "Running a little late. I'll be there in 10 minutes."
+        tone:
+          type: string
+          enum: [friendly, professional, assertive, apologetic, casual]
+          description: Selected tone for the reply
+          example: "friendly"
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Array of AI-generated suggestions
+          example:
+            - "Hey there! Running a bit late, but I'll be there in about 10 minutes."
+            - "Just a heads up, I'm running a little behind. I'll be there in 10 minutes!"
+        selectedSuggestion:
+          type: string
+          nullable: true
+          description: The suggestion user selected/saved
+          example: "Hey there! Running a bit late, but I'll be there in about 10 minutes."
+        tokensUsed:
+          type: integer
+          description: Number of tokens used to generate suggestions
+          example: 450
+        createdAt:
+          type: string
+          format: date-time
+          description: Message creation timestamp
+          example: "2026-02-24T10:35:00Z"
+
+    Analytics:
+      type: object
+      properties:
+        totalRequests:
+          type: integer
+          description: Total number of suggestion requests
+          example: 42
+        totalTokensUsed:
+          type: integer
+          description: Total tokens used in time period
+          example: 12450
+        avgResponseTime:
+          type: number
+          format: float
+          description: Average response time in seconds
+          example: 1.2
+        estimatedCost:
+          type: number
+          format: float
+          description: Estimated cost in USD
+          example: 0.15
+        toneBreakdown:
+          type: object
+          properties:
+            friendly:
+              type: integer
+              example: 17
+            professional:
+              type: integer
+              example: 13
+            assertive:
+              type: integer
+              example: 3
+            apologetic:
+              type: integer
+              example: 6
+            casual:
+              type: integer
+              example: 3
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+              example: "INVALID_TONE"
+            message:
+              type: string
+              description: Human-readable error message
+              example: "Invalid tone selected. Must be one of: friendly, professional, assertive, apologetic, casual"
+            details:
+              type: object
+              nullable: true
+              description: Additional error details
+              example: { "field": "tone", "value": "invalid_tone" }
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: "securePassword123"
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - confirmPassword
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: "securePassword123"
+        confirmPassword:
+          type: string
+          format: password
+          minLength: 6
+          example: "securePassword123"
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authentication
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: '#/components/schemas/User'
+
+    GenerateReplyRequest:
+      type: object
+      required:
+        - message
+        - tone
+      properties:
+        message:
+          type: string
+          minLength: 5
+          maxLength: 2000
+          description: The message to generate replies for
+          example: "Running a little late. I'll be there in 10 minutes."
+        tone:
+          type: string
+          enum: [friendly, professional, assertive, apologetic, casual]
+          description: Desired tone for the reply
+          example: "friendly"
+        recentMessages:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Recent conversation context (optional)
+          example: ["Hey, how are you?", "I'm good, you?"]
+
+    GenerateReplyResponse:
+      type: object
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: Array of 3 AI-generated suggestions
+          example:
+            - "Hey there! Running a bit late, but I'll be there in about 10 minutes."
+            - "Just a heads up, I'm running a little behind. I'll be there in 10 minutes!"
+            - "Sorry! I'm running late, but I'll be there in around 10 minutes."
+        tokensUsed:
+          type: integer
+          description: Tokens used for this request
+          example: 450
+        responseTime:
+          type: number
+          format: float
+          description: Response time in seconds
+          example: 1.2
+
+    SaveMessageRequest:
+      type: object
+      required:
+        - originalMessage
+        - tone
+        - selectedSuggestion
+      properties:
+        originalMessage:
+          type: string
+          example: "Running a little late. I'll be there in 10 minutes."
+        tone:
+          type: string
+          enum: [friendly, professional, assertive, apologetic, casual]
+          example: "friendly"
+        suggestions:
+          type: array
+          items:
+            type: string
+          description: All suggestions generated
+          example:
+            - "Hey there! Running a bit late, but I'll be there in about 10 minutes."
+            - "Just a heads up, I'm running a little behind. I'll be there in 10 minutes!"
+        selectedSuggestion:
+          type: string
+          description: The suggestion user selected
+          example: "Hey there! Running a bit late, but I'll be there in about 10 minutes."
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with email and password
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidEmail:
+                  value:
+                    error:
+                      code: "INVALID_EMAIL"
+                      message: "Invalid email format"
+                passwordMismatch:
+                  value:
+                    error:
+                      code: "PASSWORD_MISMATCH"
+                      message: "Passwords do not match"
+                passwordTooShort:
+                  value:
+                    error:
+                      code: "PASSWORD_TOO_SHORT"
+                      message: "Password must be at least 6 characters"
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "USER_EXISTS"
+                  message: "User with this email already exists"
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user with email and password
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INVALID_CREDENTIALS"
+                  message: "Invalid email or password"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "USER_NOT_FOUND"
+                  message: "User with this email does not exist"
+
+  /api/auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Get authenticated user's profile information
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Invalid or missing authentication token"
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Invalidate user's authentication token
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/messages/generate:
+    post:
+      tags:
+        - Messages
+      summary: Generate reply suggestions
+      description: Generate 3 AI-powered reply suggestions for a given message and tone
+      operationId: generateReplySuggestions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReplyRequest'
+      responses:
+        '200':
+          description: Suggestions generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateReplyResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidTone:
+                  value:
+                    error:
+                      code: "INVALID_TONE"
+                      message: "Invalid tone. Must be one of: friendly, professional, assertive, apologetic, casual"
+                messageTooShort:
+                  value:
+                    error:
+                      code: "MESSAGE_TOO_SHORT"
+                      message: "Message must be at least 5 characters"
+                messageTooLong:
+                  value:
+                    error:
+                      code: "MESSAGE_TOO_LONG"
+                      message: "Message must be less than 2000 characters"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "RATE_LIMIT_EXCEEDED"
+                  message: "Too many requests. Please try again later."
+        '500':
+          description: LLM service error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "LLM_SERVICE_ERROR"
+                  message: "Failed to generate suggestions. Please try again."
+
+  /api/messages/save:
+    post:
+      tags:
+        - Messages
+      summary: Save a message
+      description: Save a message and its selected suggestion to user's history
+      operationId: saveMessage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveMessageRequest'
+      responses:
+        '201':
+          description: Message saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/messages:
+    get:
+      tags:
+        - Messages
+      summary: Get user's messages
+      description: Retrieve paginated list of user's saved messages
+      operationId: getUserMessages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of messages per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: search
+          in: query
+          description: Search messages by content
+          schema:
+            type: string
+        - name: tone
+          in: query
+          description: Filter by tone
+          schema:
+            type: string
+            enum: [friendly, professional, assertive, apologetic, casual]
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  total:
+                    type: integer
+                    description: Total number of messages
+                    example: 42
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/messages/{messageId}:
+    get:
+      tags:
+        - Messages
+      summary: Get a specific message
+      description: Retrieve a single message by ID
+      operationId: getMessage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: Message ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "MESSAGE_NOT_FOUND"
+                  message: "Message with ID msg_456def not found"
+
+    delete:
+      tags:
+        - Messages
+      summary: Delete a message
+      description: Delete a message from user's history
+      operationId: deleteMessage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: Message ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Message deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/analytics/stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get usage statistics
+      description: Get user's usage statistics for a given time period
+      operationId: getAnalyticsStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Time period for statistics
+          schema:
+            type: string
+            enum: [7days, 30days, 90days, all]
+            default: "7days"
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytics'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/analytics/daily:
+    get:
+      tags:
+        - Analytics
+      summary: Get daily statistics
+      description: Get daily breakdown of usage statistics
+      operationId: getDailyAnalytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: Time period for statistics
+          schema:
+            type: string
+            enum: [7days, 30days, 90days]
+            default: "7days"
+      responses:
+        '200':
+          description: Daily statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                          example: "2026-02-24"
+                        requests:
+                          type: integer
+                          example: 6
+                        tokensUsed:
+                          type: integer
+                          example: 1800
+                        cost:
+                          type: number
+                          format: float
+                          example: 0.027
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

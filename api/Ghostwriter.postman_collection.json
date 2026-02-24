@@ -1,0 +1,287 @@
+{
+  "info": {
+    "_postman_id": "ghostwriter-api-collection",
+    "name": "Ghostwriter API",
+    "description": "Complete API collection for testing Ghostwriter endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\",\n  \"confirmPassword\": \"securePassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Generate Reply Suggestions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Running a little late. I'll be there in 10 minutes.\",\n  \"tone\": \"friendly\",\n  \"recentMessages\": [\n    \"Hey, how are you?\",\n    \"I'm good, you?\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Save Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalMessage\": \"Running a little late. I'll be there in 10 minutes.\",\n  \"tone\": \"friendly\",\n  \"suggestions\": [\n    \"Hey there! Running a bit late, but I'll be there in about 10 minutes.\",\n    \"Just a heads up, I'm running a little behind. I'll be there in 10 minutes!\",\n    \"Sorry! I'm running late, but I'll be there in around 10 minutes.\"\n  ],\n  \"selectedSuggestion\": \"Hey there! Running a bit late, but I'll be there in about 10 minutes.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/messages/save",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "save"]
+            }
+          }
+        },
+        {
+          "name": "Get User Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "tone",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Message",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/{{message_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "{{message_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/messages/{{message_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "messages", "{{message_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Usage Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/stats?period=7days",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "stats"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "7days",
+                  "description": "7days, 30days, 90days, all"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Daily Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/daily?period=7days",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "daily"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "7days",
+                  "description": "7days, 30days, 90days"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "message_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
